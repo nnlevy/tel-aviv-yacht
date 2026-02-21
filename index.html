@@ -9,10 +9,39 @@
       name="description"
       content="Private yacht charters in Tel Aviv — browse options, request availability, and plan an unforgettable day on the water."
     />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="theme-color" content="#0B1220" />
 
     <link rel="canonical" href="https://telavivyacht.com/" />
 
+    <!-- Structured data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "Tel Aviv Yacht",
+            "url": "https://telavivyacht.com/",
+            "logo": "https://telavivyacht.com/favicon.svg"
+          },
+          {
+            "@type": "WebSite",
+            "name": "Tel Aviv Yacht",
+            "url": "https://telavivyacht.com/",
+            "description": "Private yacht charters in Tel Aviv — browse options, request availability, and plan an unforgettable day on the water.",
+            "publisher": {
+              "@type": "Organization",
+              "name": "Tel Aviv Yacht",
+              "url": "https://telavivyacht.com/"
+            }
+          }
+        ]
+      }
+    </script>
+
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Tel Aviv Yacht" />
     <meta property="og:title" content="Tel Aviv Yacht — Private Charters & Boat Rentals" />
     <meta
@@ -20,20 +49,27 @@
       content="Private yacht charters in Tel Aviv — browse options, request availability, and plan an unforgettable day on the water."
     />
     <meta property="og:url" content="https://telavivyacht.com/" />
+    <meta property="og:image" content="https://telavivyacht.com/telavivyacht-og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Tel Aviv Yacht" />
 
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://telavivyacht.com/" />
     <meta name="twitter:title" content="Tel Aviv Yacht — Private Charters & Boat Rentals" />
     <meta
       name="twitter:description"
       content="Private yacht charters in Tel Aviv — browse options, request availability, and plan an unforgettable day on the water."
     />
+    <meta name="twitter:image" content="https://telavivyacht.com/telavivyacht-og.png" />
+    <meta name="twitter:image:alt" content="Tel Aviv Yacht" />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
   </head>
 
   <body>
-    <h1>Welcome to Tel Aviv Yacht</h1>
     <div id="root"></div>
     <script type="module" src="/src/react-app/main.tsx"></script>
   </body>

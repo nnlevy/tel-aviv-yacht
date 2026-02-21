@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Note: We do not grant permission via robots.txt for AI training. (Search indexing is allowed.)
+# If you honor content signals, treat ai-train as disallowed.
+
+Sitemap: https://telavivyacht.com/sitemap.xml
