@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 type DeparturePort = {
@@ -96,6 +96,39 @@ const travelStyleMultiplier: Record<string, number> = {
 };
 
 const squareBookingBaseUrl = "https://square.link/u/telavivyacht";
+const analyticsEndpoint = "/api/analytics/events";
+
+type AnalyticsEventName = "cta_click" | "form_start" | "form_submit";
+
+function trackAnalyticsEvent(event: AnalyticsEventName, payload: Record<string, string | number>) {
+  const body = JSON.stringify({
+    event,
+    path: window.location.pathname,
+    ts: new Date().toISOString(),
+    payload,
+  });
+
+  if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+    const accepted = navigator.sendBeacon(
+      analyticsEndpoint,
+      new Blob([body], { type: "application/json" }),
+    );
+    if (accepted) {
+      return;
+    }
+  }
+
+  void fetch(analyticsEndpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body,
+    keepalive: true,
+  }).catch(() => {
+    // Analytics should never block booking or navigation flows.
+  });
+}
 
 function generateInsights(
   locationId: string,
@@ -130,6 +163,7 @@ function generateInsights(
 
 function App() {
   const [selectedLocationId, setSelectedLocationId] = useState(departurePorts[0].id);
+  const bookingFormStartedRef = useRef(false);
 
   const availableVessels = useMemo(
     () => departurePorts.find((port) => port.id === selectedLocationId)?.vesselTypes ?? [],
@@ -181,6 +215,45 @@ function App() {
     [estimate, passengers, sailDate, selectedLocationId, selectedVessel, travelStyleId],
   );
 
+  const getVoyagePayload = () => ({
+    locationId: selectedLocationId,
+    vesselType: selectedVessel || "unselected",
+    passengers,
+    sailDate: sailDate || "unset",
+    travelStyleId,
+    estimate,
+  });
+
+  const trackBookingFormStart = () => {
+    if (bookingFormStartedRef.current) {
+      return;
+    }
+
+    bookingFormStartedRef.current = true;
+    trackAnalyticsEvent("form_start", {
+      formId: "voyage-planner",
+      surface: "planner",
+      ...getVoyagePayload(),
+    });
+  };
+
+  const trackCtaClick = (
+    ctaId: string,
+    ctaLabel: string,
+    target: string,
+    targetKind: string,
+    surface: string,
+  ) => {
+    trackAnalyticsEvent("cta_click", {
+      ctaId,
+      ctaLabel,
+      target,
+      targetKind,
+      surface,
+      ...getVoyagePayload(),
+    });
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedVessel) {
@@ -195,6 +268,14 @@ function App() {
       bookingUrl.searchParams.set("date", sailDate);
     }
     bookingUrl.searchParams.set("style", travelStyleId);
+
+    trackAnalyticsEvent("form_submit", {
+      formId: "voyage-planner",
+      surface: "planner",
+      checkoutProvider: "square",
+      checkoutHost: bookingUrl.host,
+      ...getVoyagePayload(),
+    });
 
     window.open(bookingUrl.toString(), "_blank", "noopener,noreferrer");
   };
@@ -219,10 +300,22 @@ function App() {
             and concierge arrivals that keep you connected to the rhythm of the city.
           </p>
           <div className="hero-cta">
-            <a className="primary" href="#voyage-planner">
+            <a
+              className="primary"
+              href="#voyage-planner"
+              onClick={() =>
+                trackCtaClick("hero-start-planning", "Start planning", "#voyage-planner", "section", "hero")
+              }
+            >
               Start planning
             </a>
-            <a className="secondary" href="#skippers">
+            <a
+              className="secondary"
+              href="#skippers"
+              onClick={() =>
+                trackCtaClick("hero-skippers", "Skippers: list availability", "#skippers", "section", "hero")
+              }
+            >
               Skippers: list availability
             </a>
           </div>
@@ -247,7 +340,10 @@ function App() {
                   type="button"
                   role="listitem"
                   className={`port-card ${selectedLocationId === port.id ? "selected" : ""}`}
-                  onClick={() => setSelectedLocationId(port.id)}
+                  onClick={() => {
+                    trackBookingFormStart();
+                    setSelectedLocationId(port.id);
+                  }}
                   aria-pressed={selectedLocationId === port.id}
                 >
                   <span className="port-name">{port.name}</span>
@@ -269,7 +365,10 @@ function App() {
                 <select
                   id="vessel"
                   value={selectedVessel}
-                  onChange={(event) => setSelectedVessel(event.target.value)}
+                  onChange={(event) => {
+                    trackBookingFormStart();
+                    setSelectedVessel(event.target.value);
+                  }}
                   required
                 >
                   {availableVessels.length === 0 && <option value="">Select a departure port</option>}
@@ -291,7 +390,10 @@ function App() {
                     id="sail-date"
                     type="date"
                     value={sailDate}
-                    onChange={(event) => setSailDate(event.target.value)}
+                    onChange={(event) => {
+                      trackBookingFormStart();
+                      setSailDate(event.target.value);
+                    }}
                   />
                 </div>
                 <div className="field-group">
@@ -302,7 +404,10 @@ function App() {
                     min={2}
                     max={24}
                     value={passengers}
-                    onChange={(event) => setPassengers(Number(event.target.value))}
+                    onChange={(event) => {
+                      trackBookingFormStart();
+                      setPassengers(Number(event.target.value));
+                    }}
                   />
                 </div>
               </div>
@@ -312,7 +417,10 @@ function App() {
                 <select
                   id="travel-style"
                   value={travelStyleId}
-                  onChange={(event) => setTravelStyleId(event.target.value)}
+                  onChange={(event) => {
+                    trackBookingFormStart();
+                    setTravelStyleId(event.target.value);
+                  }}
                 >
                   {travelStyles.map((style) => (
                     <option key={style.id} value={style.id}>
@@ -331,7 +439,19 @@ function App() {
                 </p>
               </div>
 
-              <button className="reserve" type="submit">
+              <button
+                className="reserve"
+                type="submit"
+                onClick={() =>
+                  trackCtaClick(
+                    "planner-continue-to-square",
+                    "Continue to Square checkout",
+                    squareBookingBaseUrl,
+                    "external_checkout",
+                    "planner",
+                  )
+                }
+              >
                 Continue to Square checkout
               </button>
             </form>
@@ -369,10 +489,31 @@ function App() {
               href="https://forms.gle/telavivyacht-skippers"
               target="_blank"
               rel="noreferrer"
+              onClick={() =>
+                trackCtaClick(
+                  "skippers-list-availability",
+                  "List your availability",
+                  "https://forms.gle/telavivyacht-skippers",
+                  "external_form",
+                  "skippers",
+                )
+              }
             >
               List your availability
             </a>
-            <a className="secondary" href="mailto:crew@telavivyacht.com">
+            <a
+              className="secondary"
+              href="mailto:crew@telavivyacht.com"
+              onClick={() =>
+                trackCtaClick(
+                  "skippers-crew-concierge",
+                  "Crew concierge",
+                  "mailto:crew@telavivyacht.com",
+                  "email",
+                  "skippers",
+                )
+              }
+            >
               Crew concierge
             </a>
           </div>
@@ -387,8 +528,18 @@ function App() {
         <p className="footer-links">
           <a href="mailto:sail@telavivyacht.com">sail@telavivyacht.com</a>
           <span aria-hidden="true">·</span>
-          <a href="#voyage-planner">Plan</a>
-          <a href="#skippers">Skippers</a>
+          <a
+            href="#voyage-planner"
+            onClick={() => trackCtaClick("footer-plan", "Plan", "#voyage-planner", "section", "footer")}
+          >
+            Plan
+          </a>
+          <a
+            href="#skippers"
+            onClick={() => trackCtaClick("footer-skippers", "Skippers", "#skippers", "section", "footer")}
+          >
+            Skippers
+          </a>
         </p>
       </footer>
     </div>
