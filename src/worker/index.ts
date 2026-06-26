@@ -36,4 +36,34 @@ app.post("/api/analytics/events", async (c) => {
   return c.json({ ok: true, event: eventName });
 });
 
+// ── /ads.txt + /api/ad-settings (portfolio ad wiring; routes fix + ad-settings for flagged; standard client/slots; safe for AdSense units)
+app.get("/ads.txt", (c) =>
+  c.text("google.com, pub-1860356577073395, DIRECT, f08c47fec0942fa0"),
+);
+
+app.get("/api/ad-settings", (c) => {
+  c.header("Cache-Control", "no-store");
+  return c.json({
+    enabled: true,
+    client: "ca-pub-1860356577073395",
+    slots: {
+      inline: "5613501243",
+      footer: "1809987601",
+      sticky: "7418194041",
+      sticky_layout_key: "-gw-3+1f-3d+2z"
+    },
+    placements: {
+      afterAnalysis: { type: "display", label: "Yacht planning tools & partners" },
+      library: { type: "display", label: "Publisher guides" },
+      afterLibrary: { type: "display", label: "Portfolio clusters (growth.business etc)" }
+    },
+    updatedAt: new Date().toISOString(),
+  });
+});
+app.put("/api/ad-settings", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  c.header("Cache-Control", "no-store");
+  return c.json({ ok: true, updated: body });
+});
+
 export default app;
