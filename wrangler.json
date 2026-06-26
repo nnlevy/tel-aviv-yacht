@@ -21,16 +21,6 @@
     {
       "pattern": "www.telavivyacht.com/*",
       "zone_name": "telavivyacht.com"
-    },
-    {
-      "pattern": "telavivyacht.com",
-      "zone_name": "telavivyacht.com",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.telavivyacht.com",
-      "zone_name": "telavivyacht.com",
-      "custom_domain": true
     }
   ]
 }
