@@ -12,15 +12,5 @@
     "directory": "./dist/client",
     "not_found_handling": "single-page-application",
     "run_worker_first": true
-  },
-  "routes": [
-    {
-      "pattern": "telavivyacht.com/*",
-      "zone_name": "telavivyacht.com"
-    },
-    {
-      "pattern": "www.telavivyacht.com/*",
-      "zone_name": "telavivyacht.com"
-    }
-  ]
+  }
 }
